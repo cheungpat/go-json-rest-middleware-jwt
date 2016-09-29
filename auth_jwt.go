@@ -91,7 +91,7 @@ func (mw *JWTMiddleware) middlewareImpl(writer rest.ResponseWriter, request *res
 	}
 
 	claims := token.Claims.(jwt.MapClaims)
-	idInterface := claims["id"]
+	idInterface := claims["sub"]
 
 	if idInterface == nil {
 		mw.unauthorized(writer)
@@ -162,7 +162,7 @@ func (mw *JWTMiddleware) LoginHandler(writer rest.ResponseWriter, request *rest.
 		}
 	}
 
-	claims["id"] = loginVals.Username
+	claims["sub"] = loginVals.Username
 	claims["exp"] = time.Now().Add(mw.Timeout).Unix()
 	if mw.MaxRefresh != 0 {
 		claims["orig_iat"] = time.Now().Unix()
@@ -225,7 +225,7 @@ func (mw *JWTMiddleware) RefreshHandler(writer rest.ResponseWriter, request *res
 		newClaims[key] = claims[key]
 	}
 
-	newClaims["id"] = claims["id"]
+	newClaims["sub"] = claims["sub"]
 	newClaims["exp"] = time.Now().Add(mw.Timeout).Unix()
 	newClaims["orig_iat"] = origIat
 	newToken.Claims = newClaims

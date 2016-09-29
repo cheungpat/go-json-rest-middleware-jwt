@@ -21,7 +21,7 @@ type DecoderToken struct {
 func makeTokenString(username string, key []byte) string {
 	token := jwt.New(jwt.GetSigningMethod("HS256"))
 	claims := make(jwt.MapClaims)
-	claims["id"] = username
+	claims["sub"] = username
 	claims["exp"] = time.Now().Add(time.Hour).Unix()
 	claims["orig_iat"] = time.Now().Unix()
 	token.Claims = claims
@@ -102,7 +102,7 @@ func TestAuthJWT(t *testing.T) {
 	// right credt, right method, right priv key but timeout
 	token := jwt.New(jwt.GetSigningMethod("HS256"))
 	tokenClaims := make(jwt.MapClaims)
-	tokenClaims["id"] = "admin"
+	tokenClaims["sub"] = "admin"
 	tokenClaims["exp"] = 1
 	token.Claims = tokenClaims
 	tokenString, _ := token.SignedString(key)
@@ -130,7 +130,7 @@ func TestAuthJWT(t *testing.T) {
 	// right credt, right method, right priv, wrong signing method on request
 	tokenBadSigning := jwt.New(jwt.GetSigningMethod("HS384"))
 	tokenBadSigningClaims := make(jwt.MapClaims)
-	tokenBadSigningClaims["id"] = "admin"
+	tokenBadSigningClaims["sub"] = "admin"
 	tokenBadSigningClaims["exp"] = time.Now().Add(time.Hour * 72).Unix()
 	tokenBadSigning.Claims = tokenBadSigningClaims
 	tokenBadSigningString, _ := tokenBadSigning.SignedString(key)
@@ -152,7 +152,7 @@ func TestAuthJWT(t *testing.T) {
 		if user != "admin" {
 			t.Error("REMOTE_USER is expected to be 'admin'")
 		}
-		w.WriteJson(map[string]string{"Id": "123"})
+		w.WriteJson(map[string]string{"sub": "123"})
 	}))
 
 	// auth with right cred and right method succeeds
@@ -199,7 +199,7 @@ func TestAuthJWT(t *testing.T) {
 	}
 
 	newTokenClaims := newToken.Claims.(jwt.MapClaims)
-	if newTokenClaims["id"].(string) != "admin" ||
+	if newTokenClaims["sub"].(string) != "admin" ||
 		int64(newTokenClaims["exp"].(float64)) < before {
 		t.Errorf("Received new token with wrong data")
 	}
@@ -211,7 +211,7 @@ func TestAuthJWT(t *testing.T) {
 	// refresh with expired max refresh
 	unrefreshableToken := jwt.New(jwt.GetSigningMethod("HS256"))
 	unrefreshableTokenClaims := make(jwt.MapClaims)
-	unrefreshableTokenClaims["id"] = "admin"
+	unrefreshableTokenClaims["sub"] = "admin"
 	// the combination actually doesn't make sense but is ok for the test
 	unrefreshableTokenClaims["exp"] = time.Now().Add(time.Hour).Unix()
 	unrefreshableTokenClaims["orig_iat"] = 0
@@ -227,7 +227,7 @@ func TestAuthJWT(t *testing.T) {
 	// valid refresh
 	refreshableToken := jwt.New(jwt.GetSigningMethod("HS256"))
 	refreshableTokenClaims := make(jwt.MapClaims)
-	refreshableTokenClaims["id"] = "admin"
+	refreshableTokenClaims["sub"] = "admin"
 	// we need to substract one to test the case where token is being created in
 	// the same second as it is checked -> < wouldn't fail
 	refreshableTokenClaims["exp"] = time.Now().Add(time.Hour).Unix() - 1
@@ -252,7 +252,7 @@ func TestAuthJWT(t *testing.T) {
 	}
 
 	refreshTokenClaims := refreshToken.Claims.(jwt.MapClaims)
-	if refreshTokenClaims["id"].(string) != "admin" ||
+	if refreshTokenClaims["sub"].(string) != "admin" ||
 		int64(refreshTokenClaims["orig_iat"].(float64)) != refreshableTokenClaims["orig_iat"].(int64) ||
 		int64(refreshTokenClaims["exp"].(float64)) < refreshableTokenClaims["exp"].(int64) {
 		t.Errorf("Received refreshed token with wrong data")
@@ -311,7 +311,7 @@ func TestAuthJWTPayload(t *testing.T) {
 
 	refreshableToken := jwt.New(jwt.GetSigningMethod("HS256"))
 	refreshableTokenClaims := make(jwt.MapClaims)
-	refreshableTokenClaims["id"] = "admin"
+	refreshableTokenClaims["sub"] = "admin"
 	refreshableTokenClaims["exp"] = time.Now().Add(time.Hour).Unix()
 	refreshableTokenClaims["orig_iat"] = time.Now().Unix()
 	refreshableTokenClaims["testkey"] = "testval"
@@ -349,7 +349,7 @@ func TestAuthJWTPayload(t *testing.T) {
 
 	payloadToken := jwt.New(jwt.GetSigningMethod("HS256"))
 	payloadTokenClaims := make(jwt.MapClaims)
-	payloadTokenClaims["id"] = "admin"
+	payloadTokenClaims["sub"] = "admin"
 	payloadTokenClaims["exp"] = time.Now().Add(time.Hour).Unix()
 	payloadTokenClaims["orig_iat"] = time.Now().Unix()
 	payloadTokenClaims["testkey"] = "testval"
